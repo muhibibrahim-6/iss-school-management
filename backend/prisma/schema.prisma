@@ -22,41 +22,52 @@ enum AccountStatus {
   SUSPENDED
 }
 
+enum SchoolStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
 model School {
-  id           String             @id @default(cuid())
+  id           String       @id @default(cuid())
   name         String
-  slug         String             @unique
+  slug         String       @unique
   email        String?
   phone        String?
   address      String?
   logoUrl      String?
-  primaryColor String             @default("#2563EB")
-  accentColor  String             @default("#7C3AED")
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+  primaryColor String       @default("#2563EB")
+  accentColor  String       @default("#7C3AED")
+  status       SchoolStatus @default(PENDING)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
-  memberships  SchoolMembership[]
-  classes      SchoolClass[]
-  students     Student[]
-  attendance   Attendance[]
-  subjects     Subject[]
-  exams        Exam[]
-  feeRecords   FeeRecord[]
+  memberships SchoolMembership[]
+  classes     SchoolClass[]
+  students    Student[]
+  attendance  Attendance[]
+  subjects    Subject[]
+  exams       Exam[]
+  feeRecords  FeeRecord[]
+  auditLogs   AuditLog[]
+
+  @@index([status, createdAt])
 }
 
 model User {
-  id              String             @id @default(cuid())
-  email           String             @unique
-  username        String?            @unique
-  passwordHash    String
-  displayName     String
-  status          AccountStatus      @default(PENDING)
-  emailVerified   Boolean            @default(false)
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  id            String        @id @default(cuid())
+  email         String        @unique
+  username      String?       @unique
+  passwordHash  String
+  displayName   String
+  status        AccountStatus @default(PENDING)
+  emailVerified Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
-  memberships     SchoolMembership[]
-  studentProfile  Student?
+  memberships    SchoolMembership[]
+  studentProfile Student?
+  auditLogs      AuditLog[]   @relation("AuditActor")
 }
 
 model SchoolMembership {
@@ -66,8 +77,8 @@ model SchoolMembership {
   role      Role
   createdAt DateTime @default(now())
 
-  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([schoolId, userId, role])
   @@index([schoolId, role])
@@ -81,32 +92,32 @@ model SchoolClass {
   section   String?
   createdAt DateTime @default(now())
 
-  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  students  Student[]
-  subjects  Subject[]
+  school   School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  students Student[]
+  subjects Subject[]
 
   @@unique([schoolId, name, section])
   @@index([schoolId])
 }
 
 model Student {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   schoolId      String
-  userId        String?  @unique
+  userId        String?   @unique
   classId       String?
   admissionNo   String
   fullName      String
   guardianName  String?
   guardianPhone String?
   dateOfBirth   DateTime?
-  createdAt     DateTime @default(now())
+  createdAt     DateTime  @default(now())
 
-  school        School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  user          User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  schoolClass   SchoolClass? @relation(fields: [classId], references: [id], onDelete: SetNull)
-  attendance    Attendance[]
-  feeRecords    FeeRecord[]
-  marks         ExamMark[]
+  school      School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  schoolClass SchoolClass? @relation(fields: [classId], references: [id], onDelete: SetNull)
+  attendance  Attendance[]
+  feeRecords  FeeRecord[]
+  marks       ExamMark[]
 
   @@unique([schoolId, admissionNo])
   @@index([schoolId, classId])
@@ -119,9 +130,9 @@ model Subject {
   name      String
   createdAt DateTime @default(now())
 
-  school    School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  school      School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   schoolClass SchoolClass @relation(fields: [classId], references: [id], onDelete: Cascade)
-  marks     ExamMark[]
+  marks       ExamMark[]
 
   @@unique([classId, name])
   @@index([schoolId])
@@ -136,8 +147,8 @@ model Attendance {
   note      String?
   createdAt DateTime @default(now())
 
-  school    School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  school  School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, date])
   @@index([schoolId, date])
@@ -150,8 +161,8 @@ model Exam {
   examDate  DateTime?
   createdAt DateTime @default(now())
 
-  school    School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  marks     ExamMark[]
+  school School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  marks  ExamMark[]
 
   @@index([schoolId])
 }
@@ -164,9 +175,9 @@ model ExamMark {
   marks     Float
   createdAt DateTime @default(now())
 
-  exam      Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
-  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  exam    Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 
   @@unique([examId, studentId, subjectId])
 }
@@ -182,8 +193,26 @@ model FeeRecord {
   paidAt      DateTime?
   createdAt   DateTime @default(now())
 
-  school      School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  student     Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  school  School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([schoolId, studentId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  schoolId   String?
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String?
+  details    Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  school School? @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  actor  User?   @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([schoolId, createdAt])
+  @@index([actorId, createdAt])
 }
