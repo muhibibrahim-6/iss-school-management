@@ -7,9 +7,11 @@ import rateLimit from "express-rate-limit";
 
 import authRoutes from "./routes/auth.routes.js";
 import meRoutes from "./routes/me.routes.js";
+import ownerRoutes from "./routes/owner.routes.js";
 import studentsRoutes from "./routes/students.routes.js";
 import attendanceRoutes from "./routes/attendance.routes.js";
-import ownerRoutes from "./routes/owner.routes.js";
+import classesRoutes from "./routes/classes.routes.js";
+import subjectsRoutes from "./routes/subjects.routes.js";
 
 const app = express();
 
@@ -53,9 +55,11 @@ app.get("/api/health", (_req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/me", meRoutes);
+app.use("/api/owner", ownerRoutes);
 app.use("/api/students", studentsRoutes);
 app.use("/api/attendance", attendanceRoutes);
-app.use("/api/owner", ownerRoutes);
+app.use("/api/classes", classesRoutes);
+app.use("/api/subjects", subjectsRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });
