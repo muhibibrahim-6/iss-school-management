@@ -4,10 +4,12 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+
 import authRoutes from "./routes/auth.routes.js";
 import meRoutes from "./routes/me.routes.js";
 import studentsRoutes from "./routes/students.routes.js";
 import attendanceRoutes from "./routes/attendance.routes.js";
+import ownerRoutes from "./routes/owner.routes.js";
 
 const app = express();
 
@@ -43,13 +45,17 @@ app.get("/", (_req, res) => {
 });
 
 app.get("/api/health", (_req, res) => {
-  res.json({ ok: true, service: "ISS School Management API" });
+  res.json({
+    ok: true,
+    service: "ISS School Management API",
+  });
 });
 
 app.use("/api/auth", authRoutes);
 app.use("/api/me", meRoutes);
 app.use("/api/students", studentsRoutes);
 app.use("/api/attendance", attendanceRoutes);
+app.use("/api/owner", ownerRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });
@@ -63,7 +69,9 @@ app.use(
     _next: express.NextFunction
   ) => {
     console.error("Unhandled API error:", error.message);
-    res.status(500).json({ error: "An unexpected server error occurred." });
+    res.status(500).json({
+      error: "An unexpected server error occurred.",
+    });
   }
 );
 
