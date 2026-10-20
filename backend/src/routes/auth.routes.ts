@@ -59,7 +59,8 @@ router.post("/register-school", authLimiter, async (req, res) => {
     !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(schoolSlug)
   ) {
     res.status(400).json({
-      error: "School slug must use lowercase letters, numbers, and hyphens.",
+      error:
+        "School slug must use lowercase letters, numbers, and hyphens.",
     });
     return;
   }
@@ -163,9 +164,12 @@ router.post("/login", authLimiter, async (req, res) => {
         displayName: true,
         passwordHash: true,
         status: true,
+        platformRole: true,
         memberships: {
           where: {
-            school: { status: "ACTIVE" },
+            school: {
+              status: "ACTIVE",
+            },
           },
           select: {
             schoolId: true,
@@ -204,6 +208,7 @@ router.post("/login", authLimiter, async (req, res) => {
         id: user.id,
         email: user.email,
         displayName: user.displayName,
+        platformRole: user.platformRole,
         schools: user.memberships.map((membership) => ({
           id: membership.schoolId,
           role: membership.role,
@@ -215,7 +220,9 @@ router.post("/login", authLimiter, async (req, res) => {
       },
     });
   } catch {
-    res.status(500).json({ error: "Unable to sign in right now." });
+    res.status(500).json({
+      error: "Unable to sign in right now.",
+    });
   }
 });
 
