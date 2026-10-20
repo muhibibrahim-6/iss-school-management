@@ -1,0 +1,14 @@
+
+{
+  "id": "/",
+  "name": "ISS School Management",
+  "short_name": "ISS School",
+  "description": "School management platform by International System Security.",
+  "lang": "en-US",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#2563eb",
+  "icons": []
+}
