@@ -1,6 +1,8 @@
 
 import { useState, type FormEvent } from "react";
 import { registerSchool } from "../lib/api";
+import "./LoginForm.css";
+import "./RegisterSchoolForm.css";
 
 export default function RegisterSchoolForm() {
   const [displayName, setDisplayName] = useState("");
@@ -16,9 +18,7 @@ export default function RegisterSchoolForm() {
   function updateSchoolName(value: string) {
     setSchoolName(value);
     setSchoolSlug(
-      value
-        .toLowerCase()
-        .trim()
+      value.toLowerCase().trim()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "")
         .slice(0, 60)
@@ -45,9 +45,7 @@ export default function RegisterSchoolForm() {
       setPassword("");
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to submit registration."
+        err instanceof Error ? err.message : "Unable to submit registration."
       );
     } finally {
       setLoading(false);
