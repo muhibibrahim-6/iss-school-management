@@ -12,6 +12,9 @@ import studentsRoutes from "./routes/students.routes.js";
 import attendanceRoutes from "./routes/attendance.routes.js";
 import classesRoutes from "./routes/classes.routes.js";
 import subjectsRoutes from "./routes/subjects.routes.js";
+import examsRoutes from "./routes/exams.routes.js";
+import feesRoutes from "./routes/fees.routes.js";
+import reportsRoutes from "./routes/reports.routes.js";
 
 const app = express();
 
@@ -60,6 +63,9 @@ app.use("/api/students", studentsRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/classes", classesRoutes);
 app.use("/api/subjects", subjectsRoutes);
+app.use("/api/exams", examsRoutes);
+app.use("/api/fees", feesRoutes);
+app.use("/api/reports", reportsRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });
