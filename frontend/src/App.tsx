@@ -19,11 +19,10 @@ import {
   Building2,
   LogOut,
 } from "lucide-react";
+
+import LandingPage from "./LandingPage";
 import LoginForm from "./components/LoginForm";
-import {
-  setAuthToken,
-  type LoginResponse,
-} from "./lib/api";
+import { setAuthToken, type LoginResponse } from "./lib/api";
 
 const schoolNavigation = [
   { label: "Dashboard", icon: LayoutDashboard },
@@ -45,10 +44,30 @@ const ownerNavigation = [
 ];
 
 const schoolStats = [
-  { label: "Total Students", value: "1,248", change: "Demo data", icon: GraduationCap },
-  { label: "Teachers", value: "64", change: "Demo data", icon: Users },
-  { label: "Attendance", value: "94.2%", change: "Sample rate", icon: CalendarCheck },
-  { label: "Fee Collection", value: "৳2.4L", change: "Sample amount", icon: Wallet },
+  {
+    label: "Total Students",
+    value: "1,248",
+    change: "Demo data",
+    icon: GraduationCap,
+  },
+  {
+    label: "Teachers",
+    value: "64",
+    change: "Demo data",
+    icon: Users,
+  },
+  {
+    label: "Attendance",
+    value: "94.2%",
+    change: "Sample rate",
+    icon: CalendarCheck,
+  },
+  {
+    label: "Fee Collection",
+    value: "৳2.4L",
+    change: "Sample amount",
+    icon: Wallet,
+  },
 ];
 
 export default function App() {
@@ -57,8 +76,93 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
 
+  // The landing page buttons use /login, /register and /demo.
+  // This reads the current URL when the page opens.
+  const path = window.location.pathname;
+
+  // Show the public homepage before the user signs in.
+  if (!session && path !== "/login") {
+    if (path === "/register") {
+      return (
+        <div className="public-message-page">
+          <div className="public-message-card">
+            <div className="public-message-icon">
+              <School size={30} />
+            </div>
+            <h1>Register Your School</h1>
+            <p>
+              School registration will be connected to the registration
+              form in the next step.
+            </p>
+            <a className="primary-button" href="/">
+              Back to Home
+            </a>
+            <a className="secondary-link" href="/login">
+              Already registered? Sign in
+            </a>
+          </div>
+        </div>
+      );
+    }
+
+    if (path === "/demo") {
+      return (
+        <div className="public-message-page">
+          <div className="public-message-card">
+            <div className="public-message-icon">
+              <LayoutDashboard size={30} />
+            </div>
+            <h1>ISS Live Demo</h1>
+            <p>
+              The public demo dashboard is not connected yet.
+              No real school or student information is displayed here.
+            </p>
+            <a className="primary-button" href="/">
+              Back to Home
+            </a>
+            <a className="secondary-link" href="/login">
+              Sign in
+            </a>
+          </div>
+        </div>
+      );
+    }
+
+    return <LandingPage />;
+  }
+
+  // Login screen.
   if (!session) {
-    return <LoginForm onLogin={setSession} />;
+    return (
+      <div className="login-page-wrapper">
+        <div className="login-page-top">
+          <a href="/" className="back-home-link">
+            <span>←</span> Back to Home
+          </a>
+          <div className="login-page-brand">
+            <div className="login-page-brand-icon">
+              <ShieldCheck size={24} />
+            </div>
+            <div>
+              <strong>ISS School Management</strong>
+              <span>SECURE SCHOOL WORKSPACE</span>
+            </div>
+          </div>
+        </div>
+
+        <LoginForm
+          onLogin={(result) => {
+            setSession(result);
+            setActive("Dashboard");
+            window.history.replaceState({}, "", "/dashboard");
+          }}
+        />
+
+        <p className="login-page-footer">
+          © ISS · International System Security
+        </p>
+      </div>
+    );
   }
 
   const isOwner = session.user.platformRole === "ISS_OWNER";
@@ -70,6 +174,7 @@ export default function App() {
     setSession(null);
     setActive("Dashboard");
     setSearch("");
+    window.history.replaceState({}, "", "/");
   }
 
   return (
@@ -85,12 +190,18 @@ export default function App() {
       <aside className={`sidebar ${menuOpen ? "sidebar-open" : ""}`}>
         <div className="brand">
           <div className="brand-icon">
-            {isOwner ? <ShieldCheck size={25} /> : <School size={25} />}
+            {isOwner ? (
+              <ShieldCheck size={25} />
+            ) : (
+              <School size={25} />
+            )}
           </div>
+
           <div>
             <strong>ISS School</strong>
             <span>MANAGEMENT</span>
           </div>
+
           <button
             className="icon-button close-menu"
             aria-label="Close navigation"
@@ -102,12 +213,22 @@ export default function App() {
 
         <div className="school-switcher">
           <div className="school-avatar">
-            {isOwner ? "ISS" : (currentSchool?.name.slice(0, 2).toUpperCase() || "IS")}
+            {isOwner
+              ? "ISS"
+              : currentSchool?.name.slice(0, 2).toUpperCase() || "IS"}
           </div>
+
           <div className="school-details">
-            <strong>{isOwner ? "ISS Administration" : currentSchool?.name || "No active school"}</strong>
-            <span>{isOwner ? "Platform workspace" : "School workspace"}</span>
+            <strong>
+              {isOwner
+                ? "ISS Administration"
+                : currentSchool?.name || "No active school"}
+            </strong>
+            <span>
+              {isOwner ? "Platform workspace" : "School workspace"}
+            </span>
           </div>
+
           <span className="switch-arrow">⌄</span>
         </div>
 
@@ -122,7 +243,9 @@ export default function App() {
             return (
               <button
                 key={item.label}
-                className={`nav-item ${active === item.label ? "active" : ""}`}
+                className={`nav-item ${
+                  active === item.label ? "active" : ""
+                }`}
                 onClick={() => {
                   setActive(item.label);
                   setMenuOpen(false);
@@ -130,7 +253,9 @@ export default function App() {
               >
                 <Icon size={19} />
                 <span>{item.label}</span>
-                {active === item.label && <span className="active-dot" />}
+                {active === item.label && (
+                  <span className="active-dot" />
+                )}
               </button>
             );
           })}
@@ -145,7 +270,10 @@ export default function App() {
               Open Help Center <ArrowUpRight size={15} />
             </button>
           </div>
-          <div className="version">ISS School Management · v1.0</div>
+
+          <div className="version">
+            ISS School Management · v1.0
+          </div>
         </div>
       </aside>
 
@@ -160,7 +288,9 @@ export default function App() {
           </button>
 
           <div className="breadcrumb">
-            <span>ISS</span>
+            <a href="/" aria-label="ISS home">
+              ISS
+            </a>
             <span>/</span>
             <strong>{active}</strong>
           </div>
@@ -180,7 +310,11 @@ export default function App() {
             <button
               className="icon-button notification"
               aria-label="Notifications"
-              onClick={() => window.alert("No live notifications are connected yet.")}
+              onClick={() =>
+                window.alert(
+                  "No live notifications are connected yet."
+                )
+              }
             >
               <Bell size={20} />
               <span />
@@ -205,17 +339,27 @@ export default function App() {
           <div className="welcome-row">
             <div>
               <div className="eyebrow">
-                {isOwner ? "ISS OWNER · PLATFORM WORKSPACE" : "SCHOOL WORKSPACE"}
+                {isOwner
+                  ? "ISS OWNER · PLATFORM WORKSPACE"
+                  : "SCHOOL WORKSPACE"}
               </div>
+
               <h1>{active}</h1>
+
               <p className="subtitle">
                 Welcome, {session.user.displayName}.
               </p>
             </div>
 
             <div className="date-chip">
-              {isOwner ? <ShieldCheck size={17} /> : <CalendarCheck size={17} />}
-              <span>{isOwner ? "ISS Administration" : "School Portal"}</span>
+              {isOwner ? (
+                <ShieldCheck size={17} />
+              ) : (
+                <CalendarCheck size={17} />
+              )}
+              <span>
+                {isOwner ? "ISS Administration" : "School Portal"}
+              </span>
             </div>
           </div>
 
@@ -226,33 +370,61 @@ export default function App() {
                   <div className="notice-symbol">
                     <ShieldCheck size={23} />
                   </div>
+
                   <div>
                     <strong>Welcome to ISS Administration</strong>
                     <p>
-                      Manage school registrations and platform operations.
-                      Live statistics will appear when connected to the API.
+                      Manage school registrations and platform
+                      operations. Live statistics will appear when
+                      connected to the API.
                     </p>
                   </div>
                 </section>
 
                 <section className="stats-grid">
                   {[
-                    { label: "Platform Role", value: "ISS Owner", change: "Authenticated role", icon: ShieldCheck },
-                    { label: "Active Schools", value: "—", change: "API integration pending", icon: School },
-                    { label: "Pending Registrations", value: "—", change: "API integration pending", icon: Building2 },
-                    { label: "Platform Reports", value: "—", change: "API integration pending", icon: BarChart3 },
+                    {
+                      label: "Platform Role",
+                      value: "ISS Owner",
+                      change: "Authenticated role",
+                      icon: ShieldCheck,
+                    },
+                    {
+                      label: "Active Schools",
+                      value: "—",
+                      change: "API integration pending",
+                      icon: School,
+                    },
+                    {
+                      label: "Pending Registrations",
+                      value: "—",
+                      change: "API integration pending",
+                      icon: Building2,
+                    },
+                    {
+                      label: "Platform Reports",
+                      value: "—",
+                      change: "API integration pending",
+                      icon: BarChart3,
+                    },
                   ].map((stat) => {
                     const Icon = stat.icon;
 
                     return (
                       <article className="stat-card" key={stat.label}>
                         <div className="stat-top">
-                          <div className="stat-icon"><Icon size={21} /></div>
-                          <span className="stat-arrow"><ArrowUpRight size={17} /></span>
+                          <div className="stat-icon">
+                            <Icon size={21} />
+                          </div>
+                          <span className="stat-arrow">
+                            <ArrowUpRight size={17} />
+                          </span>
                         </div>
                         <p>{stat.label}</p>
                         <h2>{stat.value}</h2>
-                        <span className="stat-note">{stat.change}</span>
+                        <span className="stat-note">
+                          {stat.change}
+                        </span>
                       </article>
                     );
                   })}
@@ -262,15 +434,22 @@ export default function App() {
                   <div className="panel-heading">
                     <div>
                       <h3>Platform Administration</h3>
-                      <p>Choose a platform section from the sidebar.</p>
+                      <p>
+                        Choose a platform section from the sidebar.
+                      </p>
                     </div>
                   </div>
+
                   <div className="empty-state">
-                    <div className="empty-icon"><Building2 size={23} /></div>
-                    <strong>School management API not connected here yet</strong>
+                    <div className="empty-icon">
+                      <Building2 size={23} />
+                    </div>
+                    <strong>
+                      School management API not connected here yet
+                    </strong>
                     <p>
-                      The backend has owner routes. The registration list and
-                      approval actions still need to be connected to this page.
+                      The registration list and approval actions
+                      still need to be connected to this page.
                     </p>
                   </div>
                 </section>
@@ -278,12 +457,16 @@ export default function App() {
             ) : (
               <>
                 <section className="notice-banner">
-                  <div className="notice-symbol"><School size={23} /></div>
+                  <div className="notice-symbol">
+                    <School size={23} />
+                  </div>
                   <div>
-                    <strong>Welcome to ISS School Management</strong>
+                    <strong>
+                      Welcome to ISS School Management
+                    </strong>
                     <p>
-                      Your school operations, organized in one workspace.
-                      The numbers below are sample data.
+                      Your school operations, organized in one
+                      workspace. The numbers below are sample data.
                     </p>
                   </div>
                 </section>
@@ -295,12 +478,18 @@ export default function App() {
                     return (
                       <article className="stat-card" key={stat.label}>
                         <div className="stat-top">
-                          <div className="stat-icon"><Icon size={21} /></div>
-                          <span className="stat-arrow"><ArrowUpRight size={17} /></span>
+                          <div className="stat-icon">
+                            <Icon size={21} />
+                          </div>
+                          <span className="stat-arrow">
+                            <ArrowUpRight size={17} />
+                          </span>
                         </div>
                         <p>{stat.label}</p>
                         <h2>{stat.value}</h2>
-                        <span className="stat-note">{stat.change}</span>
+                        <span className="stat-note">
+                          {stat.change}
+                        </span>
                       </article>
                     );
                   })}
@@ -315,18 +504,40 @@ export default function App() {
                       </div>
                       <span className="pill">Demo</span>
                     </div>
+
                     <div className="chart">
-                      {[65, 83, 74, 92, 79, 96, 58].map((height, index) => (
-                        <div className="chart-column" key={index}>
-                          <div className="bar-track">
-                            <div
-                              className={`bar ${index === 3 ? "bar-highlight" : ""}`}
-                              style={{ height: `${height}%` }}
-                            />
+                      {[65, 83, 74, 92, 79, 96, 58].map(
+                        (height, index) => (
+                          <div
+                            className="chart-column"
+                            key={index}
+                          >
+                            <div className="bar-track">
+                              <div
+                                className={`bar ${
+                                  index === 3
+                                    ? "bar-highlight"
+                                    : ""
+                                }`}
+                                style={{ height: `${height}%` }}
+                              />
+                            </div>
+                            <span>
+                              {
+                                [
+                                  "Sat",
+                                  "Sun",
+                                  "Mon",
+                                  "Tue",
+                                  "Wed",
+                                  "Thu",
+                                  "Fri",
+                                ][index]
+                              }
+                            </span>
                           </div>
-                          <span>{["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"][index]}</span>
-                        </div>
-                      ))}
+                        )
+                      )}
                     </div>
                   </article>
 
@@ -337,21 +548,35 @@ export default function App() {
                         <p>Common school tasks</p>
                       </div>
                     </div>
+
                     {[
                       ["Add Student", GraduationCap, "Students"],
-                      ["Mark Attendance", CalendarCheck, "Attendance"],
-                      ["Enter Exam Results", BookOpen, "Exams & Results"],
+                      [
+                        "Mark Attendance",
+                        CalendarCheck,
+                        "Attendance",
+                      ],
+                      [
+                        "Enter Exam Results",
+                        BookOpen,
+                        "Exams & Results",
+                      ],
                       ["Record a Fee", Wallet, "Fees"],
                     ].map(([label, Icon, target]) => {
-                      const ActionIcon = Icon as typeof GraduationCap;
+                      const ActionIcon =
+                        Icon as typeof GraduationCap;
 
                       return (
                         <button
                           className="quick-action"
                           key={label as string}
-                          onClick={() => setActive(target as string)}
+                          onClick={() =>
+                            setActive(target as string)
+                          }
                         >
-                          <span className="quick-icon"><ActionIcon size={18} /></span>
+                          <span className="quick-icon">
+                            <ActionIcon size={18} />
+                          </span>
                           <span>{label as string}</span>
                           <ArrowUpRight size={16} />
                         </button>
@@ -367,26 +592,35 @@ export default function App() {
                       <p>Sample activity for preview only</p>
                     </div>
                   </div>
+
                   <div className="empty-state">
-                    <div className="empty-icon"><Bell size={23} /></div>
+                    <div className="empty-icon">
+                      <Bell size={23} />
+                    </div>
                     <strong>No live activity yet</strong>
-                    <p>Connect the backend to show real school updates.</p>
+                    <p>
+                      Connect the backend to show real school updates.
+                    </p>
                   </div>
                 </section>
               </>
             )
           ) : (
             <section className="panel section-preview">
-              <div className="preview-icon"><LayoutDashboard size={26} /></div>
+              <div className="preview-icon">
+                <LayoutDashboard size={26} />
+              </div>
               <h2>{active}</h2>
               <p>
                 {active === "School Registrations" && isOwner
-                  ? "The owner API supports listing pending registrations and approving or suspending schools. The interactive registration table still needs to be connected."
+                  ? "The owner API supports listing pending registrations and approving or suspending schools. The registration table still needs to be connected."
                   : active === "Schools" && isOwner
                     ? "School administration will be connected to the owner API."
                     : `${active} is not connected to live data yet. This page is currently a UI preview.`}
               </p>
-              <span className="pill">UI preview · Not connected</span>
+              <span className="pill">
+                UI preview · Not connected
+              </span>
               <button
                 className="primary-button"
                 onClick={() => setActive("Dashboard")}
@@ -398,7 +632,9 @@ export default function App() {
 
           <footer className="footer">
             <span>© ISS · International System Security</span>
-            <span>Secure school management · Preview build</span>
+            <span>
+              Secure school management · Preview build
+            </span>
           </footer>
         </div>
       </main>
