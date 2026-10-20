@@ -225,16 +225,22 @@ router.get(
   ...requireSchoolRole("SCHOOL_ADMIN", "TEACHER"),
   async (req: AuthenticatedRequest, res) => {
     const schoolId = req.auth?.schoolId;
+    const examId = req.params.examId;
 
     if (!schoolId) {
       res.status(400).json({ error: "School is required." });
       return;
     }
 
+    if (typeof examId !== "string" || !examId) {
+      res.status(400).json({ error: "Invalid exam ID." });
+      return;
+    }
+
     try {
       const exam = await prisma.exam.findFirst({
         where: {
-          id: req.params.examId,
+          id: examId,
           schoolId,
         },
         select: { id: true, name: true, examDate: true },
