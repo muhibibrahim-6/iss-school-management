@@ -2,6 +2,7 @@
 import { useState, type FormEvent } from "react";
 import { LockKeyhole, Mail, School } from "lucide-react";
 import { login, type LoginResponse } from "../lib/api";
+import "./LoginForm.css";
 
 interface LoginFormProps {
   onLogin: (result: LoginResponse) => void;
