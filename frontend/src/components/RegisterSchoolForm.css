@@ -1,0 +1,33 @@
+
+.registration-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 12px 13px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  color: #0f172a;
+  background: #fff;
+  font: inherit;
+  font-size: 14px;
+}
+
+.registration-input:focus {
+  outline: 2px solid #6366f1;
+  outline-offset: 1px;
+  border-color: #6366f1;
+}
+
+.auth-card form .registration-input {
+  margin-bottom: 6px;
+}
+
+.auth-card form .registration-input:invalid:focus {
+  border-color: #b91c1c;
+}
+
+@media (max-width: 480px) {
+  .registration-input {
+    padding: 12px;
+  }
+}
