@@ -10,16 +10,24 @@ export interface LoginResponse {
     email: string;
     username?: string | null;
     displayName: string;
-    status: string;
+    status?: string;
     platformRole?: string;
     memberships?: Array<{
       schoolId: string;
       role: string;
       school?: {
-        id: string;
+        id?: string;
         name: string;
         slug: string;
       };
+    }>;
+    schools?: Array<{
+      id: string;
+      role: string;
+      name: string;
+      slug: string;
+      primaryColor?: string;
+      accentColor?: string;
     }>;
   };
 }
@@ -35,6 +43,25 @@ interface RegisterSchoolInput {
 
 interface ApiMessage {
   message: string;
+}
+
+interface BackendLoginResponse {
+  accessToken: string;
+  tokenType: string;
+  expiresIn: number;
+  user: {
+    id: string;
+    email: string;
+    displayName: string;
+    schools: Array<{
+      id: string;
+      role: string;
+      name: string;
+      slug: string;
+      primaryColor: string;
+      accentColor: string;
+    }>;
+  };
 }
 
 let authToken: string | null = null;
@@ -68,7 +95,7 @@ async function apiRequest<T>(
     });
   } catch {
     throw new Error(
-      "Cannot connect to the server. Please check the API URL and server status."
+      "Cannot connect to the server. Check the API URL and server status."
     );
   }
 
@@ -93,13 +120,12 @@ export async function login(
   identifier: string,
   password: string
 ): Promise<LoginResponse> {
-  const result = await apiRequest<LoginResponse>(
+  const result = await apiRequest<BackendLoginResponse>(
     "/api/auth/login",
     {
       method: "POST",
       body: JSON.stringify({
         identifier,
-        emailOrUsername: identifier,
         password,
       }),
     }
@@ -107,16 +133,34 @@ export async function login(
 
   if (
     !result ||
-    typeof result.token !== "string" ||
+    typeof result.accessToken !== "string" ||
     !result.user ||
     typeof result.user.id !== "string"
   ) {
     throw new Error("The server returned an invalid login response.");
   }
 
-  setAuthToken(result.token);
+  setAuthToken(result.accessToken);
 
-  return result;
+  return {
+    token: result.accessToken,
+    user: {
+      id: result.user.id,
+      email: result.user.email,
+      displayName: result.user.displayName,
+      status: "ACTIVE",
+      schools: result.user.schools,
+      memberships: result.user.schools.map((school) => ({
+        schoolId: school.id,
+        role: school.role,
+        school: {
+          id: school.id,
+          name: school.name,
+          slug: school.slug,
+        },
+      })),
+    },
+  };
 }
 
 export async function registerSchool(
