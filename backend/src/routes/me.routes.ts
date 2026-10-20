@@ -25,9 +25,15 @@ router.get("/", authenticate, async (req, res) => {
         username: true,
         displayName: true,
         status: true,
+        platformRole: true,
         emailVerified: true,
         createdAt: true,
         memberships: {
+          where: {
+            school: {
+              status: "ACTIVE",
+            },
+          },
           select: {
             role: true,
             school: {
