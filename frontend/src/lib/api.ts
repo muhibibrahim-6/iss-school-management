@@ -3,6 +3,15 @@ const API_BASE_URL = (
   import.meta.env.VITE_API_URL || "http://localhost:4000"
 ).replace(/\/+$/, "");
 
+export interface SchoolInfo {
+  id: string;
+  role: string;
+  name: string;
+  slug: string;
+  primaryColor?: string;
+  accentColor?: string;
+}
+
 export interface LoginResponse {
   token: string;
   user: {
@@ -10,24 +19,17 @@ export interface LoginResponse {
     email: string;
     username?: string | null;
     displayName: string;
-    status?: string;
-    platformRole?: string;
-    memberships?: Array<{
+    status: string;
+    platformRole: "USER" | "ISS_OWNER";
+    schools: SchoolInfo[];
+    memberships: Array<{
       schoolId: string;
       role: string;
-      school?: {
-        id?: string;
+      school: {
+        id: string;
         name: string;
         slug: string;
       };
-    }>;
-    schools?: Array<{
-      id: string;
-      role: string;
-      name: string;
-      slug: string;
-      primaryColor?: string;
-      accentColor?: string;
     }>;
   };
 }
@@ -53,14 +55,8 @@ interface BackendLoginResponse {
     id: string;
     email: string;
     displayName: string;
-    schools: Array<{
-      id: string;
-      role: string;
-      name: string;
-      slug: string;
-      primaryColor: string;
-      accentColor: string;
-    }>;
+    platformRole: "USER" | "ISS_OWNER";
+    schools: SchoolInfo[];
   };
 }
 
@@ -135,7 +131,9 @@ export async function login(
     !result ||
     typeof result.accessToken !== "string" ||
     !result.user ||
-    typeof result.user.id !== "string"
+    typeof result.user.id !== "string" ||
+    (result.user.platformRole !== "USER" &&
+      result.user.platformRole !== "ISS_OWNER")
   ) {
     throw new Error("The server returned an invalid login response.");
   }
@@ -149,6 +147,7 @@ export async function login(
       email: result.user.email,
       displayName: result.user.displayName,
       status: "ACTIVE",
+      platformRole: result.user.platformRole,
       schools: result.user.schools,
       memberships: result.user.schools.map((school) => ({
         schoolId: school.id,
@@ -166,13 +165,10 @@ export async function login(
 export async function registerSchool(
   input: RegisterSchoolInput
 ): Promise<ApiMessage> {
-  return apiRequest<ApiMessage>(
-    "/api/auth/register-school",
-    {
-      method: "POST",
-      body: JSON.stringify(input),
-    }
-  );
+  return apiRequest<ApiMessage>("/api/auth/register-school", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
 
 export async function getCurrentUser(): Promise<unknown> {
