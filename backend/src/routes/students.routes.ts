@@ -1,4 +1,3 @@
-
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
@@ -22,6 +21,7 @@ router.get(
   async (req: AuthenticatedRequest, res) => {
     try {
       const schoolId = req.auth?.schoolId;
+
       if (!schoolId) {
         res.status(400).json({ error: "School is required." });
         return;
@@ -43,8 +43,18 @@ router.get(
         ...(search
           ? {
               OR: [
-                { fullName: { contains: search, mode: "insensitive" as const } },
-                { admissionNo: { contains: search, mode: "insensitive" as const } },
+                {
+                  fullName: {
+                    contains: search,
+                    mode: "insensitive" as const,
+                  },
+                },
+                {
+                  admissionNo: {
+                    contains: search,
+                    mode: "insensitive" as const,
+                  },
+                },
               ],
             }
           : {}),
@@ -192,15 +202,21 @@ router.get(
   async (req: AuthenticatedRequest, res) => {
     try {
       const schoolId = req.auth?.schoolId;
+      const studentId = req.params.studentId;
 
       if (!schoolId) {
         res.status(400).json({ error: "School is required." });
         return;
       }
 
+      if (typeof studentId !== "string" || !studentId) {
+        res.status(400).json({ error: "Invalid student ID." });
+        return;
+      }
+
       const student = await prisma.student.findFirst({
         where: {
-          id: req.params.studentId,
+          id: studentId,
           schoolId,
         },
         select: {
