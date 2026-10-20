@@ -171,6 +171,13 @@ router.patch(
   "/:feeId/payment",
   ...requireSchoolRole("SCHOOL_ADMIN"),
   async (req: AuthenticatedRequest, res) => {
+    const feeId = req.params.feeId;
+
+    if (typeof feeId !== "string" || !feeId) {
+      res.status(400).json({ error: "Invalid fee ID." });
+      return;
+    }
+
     const parsed = paymentSchema.safeParse(req.body);
 
     if (!parsed.success) {
@@ -191,7 +198,7 @@ router.patch(
     try {
       const existing = await prisma.feeRecord.findFirst({
         where: {
-          id: req.params.feeId,
+          id: feeId,
           schoolId,
         },
         select: {
