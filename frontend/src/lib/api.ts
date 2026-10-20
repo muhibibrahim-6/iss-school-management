@@ -3,76 +3,85 @@ const API_BASE_URL = (
   import.meta.env.VITE_API_URL || "http://localhost:4000"
 ).replace(/\/+$/, "");
 
-export interface SchoolInfo {
-  id: string;
-  role: "ISS_OWNER" | "SCHOOL_ADMIN" | "TEACHER" | "STUDENT" | "PARENT";
-  name: string;
-  slug: string;
-  primaryColor: string;
-  accentColor: string;
-}
-
-export interface AuthUser {
-  id: string;
-  email: string;
-  displayName: string;
-  schools: SchoolInfo[];
-}
-
 export interface LoginResponse {
-  accessToken: string;
-  tokenType: "Bearer";
-  expiresIn: number;
-  user: AuthUser;
+  token: string;
+  user: {
+    id: string;
+    email: string;
+    username?: string | null;
+    displayName: string;
+    status: string;
+    platformRole?: string;
+    memberships?: Array<{
+      schoolId: string;
+      role: string;
+      school?: {
+        id: string;
+        name: string;
+        slug: string;
+      };
+    }>;
+  };
 }
 
-export function saveAccessToken(token: string): void {
-  if (typeof window === "undefined") return;
-  window.sessionStorage.setItem("iss_access_token", token);
+interface RegisterSchoolInput {
+  displayName: string;
+  email: string;
+  username?: string;
+  password: string;
+  schoolName: string;
+  schoolSlug: string;
 }
 
-export function getAccessToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.sessionStorage.getItem("iss_access_token");
+interface ApiMessage {
+  message: string;
 }
 
-export function clearAccessToken(): void {
-  if (typeof window === "undefined") return;
-  window.sessionStorage.removeItem("iss_access_token");
+let authToken: string | null = null;
+
+export function setAuthToken(token: string | null): void {
+  authToken = token;
 }
 
-export async function apiRequest<T>(
+async function apiRequest<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const token = getAccessToken();
   const headers = new Headers(options.headers);
 
   headers.set("Accept", "application/json");
 
-  if (options.body && !headers.has("Content-Type")) {
+  if (options.body) {
     headers.set("Content-Type", "application/json");
   }
 
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
+  if (authToken) {
+    headers.set("Authorization", `Bearer ${authToken}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch {
+    throw new Error(
+      "Cannot connect to the server. Please check the API URL and server status."
+    );
+  }
 
   const data: unknown = await response.json().catch(() => null);
 
   if (!response.ok) {
     const message =
-      data &&
       typeof data === "object" &&
+      data !== null &&
       "error" in data &&
       typeof data.error === "string"
         ? data.error
-        : "The request could not be completed.";
+        : `Request failed (${response.status}).`;
 
     throw new Error(message);
   }
@@ -84,30 +93,50 @@ export async function login(
   identifier: string,
   password: string
 ): Promise<LoginResponse> {
-  const result = await apiRequest<LoginResponse>("/api/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ identifier, password }),
-  });
+  const result = await apiRequest<LoginResponse>(
+    "/api/auth/login",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        identifier,
+        emailOrUsername: identifier,
+        password,
+      }),
+    }
+  );
 
-  saveAccessToken(result.accessToken);
+  if (
+    !result ||
+    typeof result.token !== "string" ||
+    !result.user ||
+    typeof result.user.id !== "string"
+  ) {
+    throw new Error("The server returned an invalid login response.");
+  }
+
+  setAuthToken(result.token);
 
   return result;
 }
 
-export async function registerSchool(input: {
-  displayName: string;
-  email: string;
-  username?: string;
-  password: string;
-  schoolName: string;
-  schoolSlug: string;
-}): Promise<{ message: string }> {
-  return apiRequest("/api/auth/register-school", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
+export async function registerSchool(
+  input: RegisterSchoolInput
+): Promise<ApiMessage> {
+  return apiRequest<ApiMessage>(
+    "/api/auth/register-school",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    }
+  );
 }
 
-export async function getMyProfile(): Promise<unknown> {
-  return apiRequest("/api/me");
+export async function getCurrentUser(): Promise<unknown> {
+  return apiRequest<unknown>("/api/me");
 }
+
+export async function getReportSummary(): Promise<unknown> {
+  return apiRequest<unknown>("/api/reports/summary");
+}
+
+export { API_BASE_URL };
